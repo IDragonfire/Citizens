@@ -57,7 +57,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.google.common.base.Joiner;
 
 /**
- * Citizens - NPCs for Bukkit
+ * Citizens - NPCs for Bukkit R1
  */
 public class Citizens extends JavaPlugin {
 	public static Citizens plugin;
