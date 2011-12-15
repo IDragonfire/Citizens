@@ -1,16 +1,21 @@
 package net.citizensnpcs.dpromoter;
 
+import java.util.HashMap;
+
 import net.citizensnpcs.Citizens;
 import net.citizensnpcs.dpromoter.data.DMessageStore;
 import net.citizensnpcs.dpromoter.data.DNPCjobLookup;
-import net.citizensnpcs.dpromoter.data.DStatesStorage;
 import net.citizensnpcs.dpromoter.data.DNPCjobLookup.DJobInfoValue;
+import net.citizensnpcs.dpromoter.data.DStatesStorage;
 import net.citizensnpcs.npctypes.CitizensNPC;
 import net.citizensnpcs.npctypes.CitizensNPCType;
 import net.citizensnpcs.properties.Storage;
 import net.citizensnpcs.resources.npclib.HumanNPC;
+import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.permission.Permission;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -18,12 +23,20 @@ public class DPromoter extends CitizensNPC {
 	private static DNPCjobLookup npclookup = DNPCjobLookup.INSTANCE;
 	private static DStatesStorage stateslookup = DStatesStorage.INSTANCE;
 	private static DMessageStore msglookup = DMessageStore.INSTANCE;
+	private static Permission permission = Bukkit.getServer()
+			.getServicesManager()
+			.getRegistration(net.milkbowl.vault.permission.Permission.class)
+			.getProvider();
+	private static Economy economy = Bukkit.getServer().getServicesManager()
+			.getRegistration(net.milkbowl.vault.economy.Economy.class)
+			.getProvider();
+	private static Material basicItem = Material.SPONGE;
 	// events
 	public static final int MEMBER = 31;
-	public static final int MEMBER_INTO = 30;
+	public static final int MEMBER_INTRO = 30;
 	public static final int TRIAL_NEED = 21;
 	public static final int TRIAL_INTRO = 20;
-	public static final int USER_NO = 11;
+	public static final int USER_ASK = 11;
 	public static final int USER_INTRO = 10;
 	public static final int NONE = 0;
 	// mouse
@@ -41,32 +54,119 @@ public class DPromoter extends CitizensNPC {
 	@Override
 	public void onRightClick(Player player, HumanNPC npc) {
 		action(DPromoter.RIGHT, player, npc);
-		DJobInfoValue v = npclookup.getJobInfoFromNpc(npc);
-		// TODO remove
-		npclookup.test();
-		if (v != null) {
-			player.sendMessage("name: " + v.getName() + " rank: "
-					+ v.getNeededRank() + " sp: " + v.getNeededSkillpoints()
-					+ " bi: " + v.getNeededBasicItems() + " €: "
-					+ v.getNeededMoney());
-		} else {
-			player.sendMessage("Bei mir gibt es keinen Job");
-		}
+		// DJobInfoValue v = npclookup.getJobInfoFromNpc(npc);
+		// if (v != null) {
+		// player.sendMessage("name: " + v.getName() + " rank: "
+		// + v.getNeededRank() + " sp: " + v.getNeededSkillpoints()
+		// + " bi: " + v.getNeededBasicItems() + " €: "
+		// + v.getNeededMoney());
+		// } else {
+		// player.sendMessage("Bei mir gibt es keinen Job");
+		// }
 	}
 
 	public void action(int mouse, Player player, HumanNPC npc) {
-		int state = stateslookup.getStatOfNpcForPlayer(npc, player);
-		if (mouse == LEFT) {
-			disagreeAnimation(npc);
+		// check if NPC has a job for promoting
+		int jobid = npclookup.getJobOfNpc(npc);
+		if (jobid > 0) {
+			// get State + level from DB (if missing insert into db)
+			int[] state = stateslookup.getStatOfNpcForPlayer(jobid, player);
+			switch (state[0]) {
+			case DPromoter.USER_INTRO:
+				player.sendMessage(msglookup.getMessageForEventAnJobAndLevel(
+						jobid, state[0], state[1]));
+				state[0] = DPromoter.TRIAL_INTRO;
+				stateslookup.setStateAndLevel(jobid, player, state);
+				break;
+
+			case DPromoter.TRIAL_INTRO:
+				if (mouse == DPromoter.CONFIRM) {
+					DJobInfoValue jobInfo = npclookup.getJobInfoFromNpc(jobid);
+					player.sendMessage(msglookup
+							.getMessageForEventAnJobAndLevel(jobid, state[0],
+									state[1], generateConfig(jobInfo)));
+					state[0] = DPromoter.TRIAL_NEED;
+					stateslookup.setStateAndLevel(jobid, player, state);
+				}
+				break;
+
+			case DPromoter.TRIAL_NEED:
+				DJobInfoValue jobInfo = npclookup.getJobInfoFromNpc(jobid);
+				System.out.println(jobInfo.toString());
+				if (hasRequirements(player, jobInfo)) {
+					removeRequirements(player, jobInfo);
+					player.sendMessage(msglookup
+							.getMessageForEventAnJobAndLevel(jobid,
+									DPromoter.MEMBER_INTRO, state[1]));
+					state[0] = DPromoter.MEMBER;
+					permission.playerAddGroup(player, jobInfo.getPex());
+					stateslookup.setStateAndLevel(jobid, player, state);
+					player.sendMessage(msglookup
+							.getMessageForEventAnJobAndLevel(jobid, state[0],
+									state[1]));
+				} else {
+					player.sendMessage(msglookup
+							.getMessageForEventAnJobAndLevel(jobid, state[0],
+									state[1], generateConfig(jobInfo)));
+				}
+				break;
+
+			default:
+				player.sendMessage(msglookup.getMessageForEventAnJobAndLevel(
+						jobid, state[0], state[1]));
+				break;
+			}
 		} else {
-			agreeAnimation(npc);
+			// TODO z_fancy
+			player.sendMessage("Sag bitte ein Admin, dass ich keinen Job habe.");
 		}
-		if (state == TRIAL_NEED) {
-			player.sendMessage("");
-		} else {
-			player.sendMessage(msglookup.getMessageForEventAndNpc(npc, state));
+	}
+
+	public String[][] generateConfig(DJobInfoValue jobInfo) {
+		String[][] config = new String[2][2];
+		config[0][0] = "m";
+		config[0][1] = jobInfo.getNeededMoney() + "";
+		config[1][0] = "bi";
+		config[1][1] = jobInfo.getNeededBasicItems() + "";
+		return config;
+	}
+
+	public boolean hasRequirements(Player player, DJobInfoValue jobInfo) {
+		return hasAmoundOfBasicItem(player, jobInfo)
+				&& economy.has(player.getName(), jobInfo.getNeededMoney());
+	}
+
+	public void removeRequirements(Player player, DJobInfoValue jobInfo) {
+		removeAmountOfItem(player, basicItem, jobInfo.getNeededBasicItems());
+		economy.withdrawPlayer(player.getName(), jobInfo.getNeededMoney());
+	}
+
+	public boolean hasAmoundOfBasicItem(Player player, DJobInfoValue jobInfo) {
+		return player.getInventory().contains(basicItem,
+				jobInfo.getNeededBasicItems());
+	}
+
+	// don't check amount use Player.getInventory().contains
+	public void removeAmountOfItem(Player player, Material material,
+			int amount_needed) {
+		HashMap<Integer, ? extends ItemStack> stacks = player.getInventory()
+				.all(material);
+		int max = amount_needed;
+		ItemStack tmpStack = null;
+		int amount = -1;
+		for (Integer slot : stacks.keySet()) {
+			tmpStack = stacks.get(slot);
+			amount = tmpStack.getAmount() - max;
+			if (amount > 0) {
+				tmpStack.setAmount(amount);
+				break;
+			} else if (amount == 0) {
+				player.getInventory().clear(slot.intValue());
+				break;
+			}
+			max -= tmpStack.getAmount();
+			player.getInventory().clear(slot.intValue());
 		}
-		npc.setItemInHand(new ItemStack(org.bukkit.Material.REDSTONE_TORCH_ON));
 	}
 
 	@Override
@@ -76,12 +176,12 @@ public class DPromoter extends CitizensNPC {
 
 	@Override
 	public void load(Storage profiles, int UID) {
-		// TODO
+		// use db not config file
 	}
 
 	@Override
 	public void save(Storage profiles, int UID) {
-		// TODO Auto-generated method stub
+		// use db not config file
 
 	}
 
@@ -159,6 +259,7 @@ public class DPromoter extends CitizensNPC {
 			this.npc = npc;
 		}
 
+		@Override
 		public void run() {
 			this.npc.getNPCData().setLookClose(false);
 			try {

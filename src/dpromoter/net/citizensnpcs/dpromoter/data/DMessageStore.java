@@ -10,7 +10,6 @@ import net.citizensnpcs.idragonfire.keys.DKey;
 import net.citizensnpcs.idragonfire.storage.DHashStore;
 import net.citizensnpcs.idragonfire.values.DIntValue;
 import net.citizensnpcs.idragonfire.values.DStringValue;
-import net.citizensnpcs.resources.npclib.HumanNPC;
 import net.citizensnpcs.utils.Messaging;
 
 /**
@@ -24,29 +23,51 @@ public class DMessageStore extends DHashStore {
 	public static final DMessageStore INSTANCE = new DMessageStore();
 	private Random random;
 	private DHashStore randCountCache;
-	public static final String ERROR = "Please contact an admin that the text is missing for";
-	private DMessageKey tmp;
+	public static final String ERROR = "Sag bitte einen Admin, dass der Text fehlt -> ";
+	public static final String SEPERATOR = "$";
 
 	private DMessageStore() {
 		super(DMySQLManager.INSTANCE);
 		this.random = new Random();
 		this.randCountCache = new DHashStore(DMySQLManager.INSTANCE);
-		this.tmp = new DMessageKey(-1, -1);
 	}
 
-	public String getMessageForEventAndNpc(HumanNPC npc, int event) {
-		try {
-			this.tmp.setNpcid(npc.getUID());
-			this.tmp.setEvent(event);
-			return getStringValue(this.tmp).getString();
-			// return getStringValue(new DMessageKey(event, npc.getUID()))
-			// .getString();
-		} catch (NullPointerException e) {
-			Messaging.log("Missing message:" + " [event:" + event + ",npc:"
-					+ npc.getUID() + "]");
+	/**
+	 * Gets the value for a specified key
+	 * 
+	 * @param normalReplacement
+	 *            replace all from [i][0] with [i][1] (for dynamic varibles,
+	 *            like price, time, ..)
+	 * @param configReplacement
+	 *            replace [i] with elements in the config (for static variables,
+	 *            like serverName, currency, ..)
+	 * 
+	 * @return the d value
+	 */
+	// TODO use StringBuffer?
+	public String getMessageForEventAnJobAndLevel(int job, int event,
+			int level, String[][] normalReplacement) {
+		String buf = getMessageForEventAnJobAndLevel(job, event, level);
+		for (int i = 0; i < normalReplacement.length; i++) {
+			buf = buf.replace(SEPERATOR + normalReplacement[i][0] + SEPERATOR,
+					normalReplacement[i][1]);
+			System.out.println(SEPERATOR + normalReplacement[i][0] + " - "
+					+ normalReplacement[i][1]);
 		}
-		return DMessageStore.ERROR + " [event:" + event + ",npc:"
-				+ npc.getUID() + "]";
+		return buf;
+	}
+
+	public String getMessageForEventAnJobAndLevel(int job, int event, int level) {
+
+		DStringValue tmpString = getStringValue(new DMessageKey(event, job,
+				level));
+		if (tmpString != null) {
+			return tmpString.getString();
+		}
+		String infos = " [job:" + job + ",event:" + event + ",level:" + level
+				+ "]";
+		Messaging.log("Missing message:" + infos);
+		return DMessageStore.ERROR + infos;
 	}
 
 	public DStringValue getStringValue(DMessageKey key)
@@ -64,14 +85,16 @@ public class DMessageStore extends DHashStore {
 
 	class DMessageKey extends DCachedKey {
 		private int event;
-		private int npcid;
+		private int jobid;
 		private int randid;
-		public static final String SQL_DB = "dmessagestore";
+		private int levelid;
+		public static final String SQL_DB = "dp_messagestore";
 
-		public DMessageKey(int event, int npcid) {
+		public DMessageKey(int event, int jobid, int levelid) {
 			this.event = event;
-			this.npcid = npcid;
+			this.jobid = jobid;
 			this.randid = 0;
+			this.levelid = levelid;
 		}
 
 		@Override
@@ -81,9 +104,16 @@ public class DMessageStore extends DHashStore {
 
 		@Override
 		public String getSQL_SELECT() {
-			return "SELECT msg FROM " + DMessageKey.SQL_DB + " WHERE event = "
-					+ this.event + " AND npcid = " + this.npcid
-					+ " AND randid = " + this.randid + " LIMIT 1";
+			return "SELECT msg FROM "
+					+ DMessageKey.SQL_DB
+					+ " WHERE event = "
+					+ this.event
+					+ " AND jobid = "
+					+ this.jobid
+					+ " AND randid = "
+					+ this.randid
+					+ ((this.levelid > 0) ? " AND leveid = " + this.levelid
+							: "") + " LIMIT 1";
 		}
 
 		@Override
@@ -104,23 +134,31 @@ public class DMessageStore extends DHashStore {
 			this.randid = randid;
 		}
 
-		public int getNpcid() {
-			return this.npcid;
-		}
-
 		public void setEvent(int event) {
 			this.event = event;
 		}
 
-		public void setNpcid(int npcid) {
-			this.npcid = npcid;
+		public int getJobid() {
+			return this.jobid;
+		}
+
+		public void setJobid(int jobid) {
+			this.jobid = jobid;
+		}
+
+		public int getLevelid() {
+			return this.levelid;
+		}
+
+		public void setLevelid(int levelid) {
+			this.levelid = levelid;
 		}
 
 		@Override
 		public int hashCode() {
-			int result = 1;
-			result = 31 * result + this.event;
-			result = 31 * result + this.npcid;
+			int result = 31 * 1 + this.event;
+			result = 31 * result + this.jobid;
+			result = 31 * result + this.levelid;
 			result = 31 * result + this.randid;
 			return result;
 		}
@@ -129,8 +167,9 @@ public class DMessageStore extends DHashStore {
 		public boolean equals(Object obj) {
 			try {
 				return this.event == ((DMessageKey) obj).getEvent()
-						&& this.npcid == ((DMessageKey) obj).getNpcid()
-						&& this.randid == ((DMessageKey) obj).getRandid();
+						&& this.jobid == ((DMessageKey) obj).getJobid()
+						&& this.randid == ((DMessageKey) obj).getRandid()
+						&& this.levelid == ((DMessageKey) obj).getLevelid();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -139,13 +178,13 @@ public class DMessageStore extends DHashStore {
 
 		@Override
 		public String toString() {
-			return "[event:" + this.event + ",npc:" + this.npcid + ",rand:"
+			return "[event:" + this.event + ",npc:" + this.jobid + ",rand:"
 					+ this.randid + "] " + getClass().getSimpleName();
 		}
 	}
 
 	class DMaxRandCountKey extends DCachedKey {
-		public static final String SQL_DB = "dmessagestore";
+		public static final String SQL_DB = "dp_messagestore";
 		private DMessageKey msg;
 
 		public DMaxRandCountKey(DMessageKey msgkey) {
@@ -157,31 +196,29 @@ public class DMessageStore extends DHashStore {
 		}
 
 		@Override
-		public DIntValue fetch(ResultSet rs) {
-			try {
-				return DKey.getDIntValueFromResultSet(rs);
-			} catch (Exception e) {
-				// e.printStackTrace();
-				System.out.println("EXP found #########################");
-			}
-			System.out.println("error found #########################");
-			return new DIntValue(1);
+		public DIntValue fetch(ResultSet rs) throws SQLException {
+			return DKey.getDIntValueFromResultSet(rs);
 		}
 
 		@Override
 		public String getSQL_SELECT() {
 			return "SELECT COUNT(randid) FROM " + DMaxRandCountKey.SQL_DB
-					+ " WHERE event = " + this.msg.getEvent() + " AND npcid = "
-					+ this.msg.getNpcid() + " LIMIT 1";
+					+ " WHERE event = " + this.msg.getEvent() + " AND jobid = "
+					+ this.msg.getJobid() + " AND levelid = "
+					+ this.msg.getLevelid() + " LIMIT 1";
 		}
 
 		public DMessageKey getMsg() {
 			return this.msg;
 		}
 
+		// TODO make a better hashfunction
 		@Override
 		public int hashCode() {
-			return 31 * (31 + this.msg.getEvent()) + this.msg.getNpcid();
+			int result = 31 * 1 + this.msg.getEvent();
+			result = 31 * result + this.msg.getJobid();
+			result = 31 * result + this.msg.getLevelid();
+			return result;
 		}
 
 		@Override
@@ -189,8 +226,10 @@ public class DMessageStore extends DHashStore {
 			try {
 				return this.msg.getEvent() == ((DMaxRandCountKey) obj).getMsg()
 						.getEvent()
-						&& this.msg.getNpcid() == ((DMaxRandCountKey) obj)
-								.getMsg().getNpcid();
+						&& this.msg.getJobid() == ((DMaxRandCountKey) obj)
+								.getMsg().getJobid()
+						&& this.msg.getLevelid() == ((DMaxRandCountKey) obj)
+								.getMsg().getLevelid();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -205,9 +244,10 @@ public class DMessageStore extends DHashStore {
 
 		@Override
 		public String toString() {
-			return "[event:" + this.msg.getEvent() + ",npc:"
-					+ this.msg.getNpcid() + ",rand:" + this.msg.getRandid()
-					+ "] " + getClass().getSimpleName();
+			return "[event:" + this.msg.getEvent() + ",job:"
+					+ this.msg.getJobid() + ",rand:" + this.msg.getRandid()
+					+ ",level:" + this.msg.getLevelid() + "] "
+					+ getClass().getSimpleName();
 		}
 	}
 }

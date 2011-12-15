@@ -2,11 +2,8 @@ package net.citizensnpcs.dpromoter.data;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Iterator;
-import java.util.Set;
 
 import net.citizensnpcs.idragonfire.datamanager.DMySQLManager;
-import net.citizensnpcs.idragonfire.keys.DCachedKey;
 import net.citizensnpcs.idragonfire.keys.DIntKey;
 import net.citizensnpcs.idragonfire.keys.DKey;
 import net.citizensnpcs.idragonfire.storage.DHashStore;
@@ -18,31 +15,23 @@ import net.citizensnpcs.utils.Messaging;
 public class DNPCjobLookup extends DHashStore {
 	public static final DNPCjobLookup INSTANCE = new DNPCjobLookup();
 
-	// TODO remove
-	public void test() {
-		Set<DCachedKey> keys = super.cache.keySet();
-		int i = 0;
-		for (Iterator<?> iterator = keys.iterator(); iterator.hasNext();) {
-			DCachedKey dCachedKey = (DCachedKey) iterator.next();
-			System.out.println(i + ":" + dCachedKey + ":"
-					+ this.cache.get(dCachedKey));
-			i++;
-		}
-	}
-
 	// ### JOBlookup
 
 	private DNPCjobLookup() {
 		super(DMySQLManager.INSTANCE);
 	}
 
-	public int getJobOfNpc(HumanNPC npc) throws NullPointerException {
-		return ((DIntValue) super.getDValue(new DNPCjobKey(npc.getUID())))
-				.getInt();
+	public int getJobOfNpc(HumanNPC npc) {
+		DIntValue jobid = ((DIntValue) super.getDValue(new DNPCjobKey(npc
+				.getUID())));
+		if (jobid != null) {
+			return jobid.getInt();
+		}
+		return -1;
 	}
 
 	public class DNPCjobKey extends DIntKey {
-		public static final String SQL_DB = "dnpc";
+		public static final String SQL_DB = "dp_npc";
 
 		public DNPCjobKey(int id) {
 			super(id);
@@ -67,21 +56,17 @@ public class DNPCjobLookup extends DHashStore {
 	}
 
 	// ### JOBinfoLookup
-	private DJobInfoKey tmpinfo = new DJobInfoKey(-1);
-
-	public DJobInfoValue getJobInfoFromNpc(HumanNPC npc) {
+	public DJobInfoValue getJobInfoFromNpc(int jobid) {
 		try {
-			this.tmpinfo.setId(npc.getUID());
-			return (DJobInfoValue) super.getDValue(this.tmpinfo);
+			return (DJobInfoValue) super.getDValue(new DJobInfoKey(jobid));
 		} catch (Exception e) {
-			Messaging.log("No JobInfoData for npc " + npc.getUID());
+			Messaging.log("No JobInfoData for job  " + jobid);
 		}
 		return null;
 	}
 
 	public class DJobInfoKey extends DIntKey {
-		public static final String SQL_DB = "djobs";
-		public static final String SQL_DB2 = "dnpc";
+		public static final String SQL_DB = "dp_jobs";
 
 		public DJobInfoKey(int id) {
 			super(id);
@@ -89,19 +74,18 @@ public class DNPCjobLookup extends DHashStore {
 
 		@Override
 		public DJobInfoValue fetch(ResultSet rs) throws SQLException {
-			return new DJobInfoValue(rs.getString(1), rs.getInt(2), rs
-					.getInt(3), rs.getInt(4), rs.getInt(5));
+			return new DJobInfoValue(rs.getString(1), rs.getInt(3),
+					rs.getInt(4), rs.getInt(5), rs.getInt(6), rs.getString(2));
 		}
 
+		// TODO implement jobLevel
 		@Override
 		public String getSQL_SELECT() {
-			return "SELECT name, rank_needed, skillpoints_needed, numberbasicitems_needed, money_needed FROM "
-					+ SQL_DB2
-					+ " AS n LEFT JOIN "
+			return "SELECT name, pex, rank_needed, skillpoints_needed, numberbasicitems_needed, money_needed FROM "
 					+ SQL_DB
-					+ " AS j ON n.jobid = j.jobid WHERE npcid = "
-					+ this.id
-					+ " LIMIT 1";
+					+ " WHERE job_parent = "
+					+ super.id
+					+ " AND job_level = 1 " + " LIMIT 1";
 		}
 
 		@Override
@@ -122,15 +106,18 @@ public class DNPCjobLookup extends DHashStore {
 		private int neededSkillpoints;
 		private int neededBasicItems;
 		private int neededMoney;
+		private String pex;
 
 		public DJobInfoValue(String name, int neededRank,
-				int neededSkillpoints, int neededBasicItems, int neededMoney) {
+				int neededSkillpoints, int neededBasicItems, int neededMoney,
+				String pex) {
 			super();
 			this.name = name;
 			this.neededRank = neededRank;
 			this.neededSkillpoints = neededSkillpoints;
 			this.neededBasicItems = neededBasicItems;
 			this.neededMoney = neededMoney;
+			this.pex = pex;
 		}
 
 		public String getName() {
@@ -153,6 +140,10 @@ public class DNPCjobLookup extends DHashStore {
 			return this.neededMoney;
 		}
 
+		public String getPex() {
+			return this.pex;
+		}
+
 		@Override
 		public String getSQL_UPDATE(DKey key) {
 			// TODO Auto-generated method stub
@@ -170,8 +161,8 @@ public class DNPCjobLookup extends DHashStore {
 			return "[name=" + this.name + ", neededBasicItems="
 					+ this.neededBasicItems + ", neededMoney="
 					+ this.neededMoney + ", neededRank=" + this.neededRank
-					+ ", neededSkillpoints=" + this.neededSkillpoints + "] "
-					+ getClass().getSimpleName();
+					+ ", neededSkillpoints=" + this.neededSkillpoints + ",pex:"
+					+ this.pex + "] " + getClass().getSimpleName();
 		}
 	}
 }
