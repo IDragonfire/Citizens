@@ -27,10 +27,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-@CommandRequirements(
-		requireSelected = true,
-		requireOwnership = true,
-		requiredType = "guard")
+@CommandRequirements(requireSelected = true, requireOwnership = true, requiredType = "guard")
 public class GuardCommands extends CommandHandler {
 	public static final GuardCommands INSTANCE = new GuardCommands();
 
@@ -39,26 +36,15 @@ public class GuardCommands extends CommandHandler {
 
 	@CommandRequirements()
 	@ServerCommand()
-	@Command(
-			aliases = "guard",
-			usage = "help",
-			desc = "view the guard help page",
-			modifiers = "help",
-			min = 1,
-			max = 1)
+	@Command(aliases = "guard", usage = "help", desc = "view the guard help page", modifiers = "help", min = 1, max = 1)
 	@CommandPermissions("guard.use.help")
 	public static void guardHelp(CommandContext args, CommandSender sender,
 			HumanNPC npc) {
 		INSTANCE.sendHelpPage(sender);
 	}
 
-	@Command(
-			aliases = "guard",
-			usage = "[type]",
-			desc = "change a guard's type",
-			modifiers = { "soldier", "bodyguard", "bouncer" },
-			min = 1,
-			max = 1)
+	@Command(aliases = "guard", usage = "[type]", desc = "change a guard's type", modifiers = {
+			"soldier", "bodyguard", "bouncer" }, min = 1, max = 1)
 	@CommandPermissions("guard.modify.type")
 	public static void type(CommandContext args, Player player, HumanNPC npc) {
 		Guard guard = npc.getType("guard");
@@ -80,14 +66,7 @@ public class GuardCommands extends CommandHandler {
 		}
 	}
 
-	@Command(
-			aliases = "guard",
-			usage = "flags [-g,m,p] (page)",
-			desc = "view a guard's flags",
-			modifiers = "flags",
-			flags = "gmp",
-			min = 1,
-			max = 2)
+	@Command(aliases = "guard", usage = "flags [-g,m,p] (page)", desc = "view a guard's flags", modifiers = "flags", flags = "gmp", min = 1, max = 2)
 	@CommandPermissions("guard.use.flags")
 	public static void flags(CommandContext args, Player player, HumanNPC npc) {
 		int page = 1;
@@ -129,13 +108,8 @@ public class GuardCommands extends CommandHandler {
 		instance.process(page);
 	}
 
-	@Command(
-			aliases = "guard",
-			usage = "addflag (priority) [target] (-a,g,m,p)",
-			desc = "add a flag to a guard",
-			modifiers = { "addflag", "af" },
-			flags = "agmp",
-			min = 1)
+	@Command(aliases = "guard", usage = "addflag (priority) [target] (-a,g,m,p)", desc = "add a flag to a guard", modifiers = {
+			"addflag", "af" }, flags = "agmp", min = 1)
 	@CommandPermissions("guard.modify.flags")
 	public static void addFlag(CommandContext args, Player player, HumanNPC npc) {
 		if (args.getFlags().size() == 0) {
@@ -213,13 +187,8 @@ public class GuardCommands extends CommandHandler {
 				+ StringUtils.wrap(name) + ".");
 	}
 
-	@Command(
-			aliases = "guard",
-			usage = "delflag [name] [-p,m,g] (-a)",
-			desc = "deletes a flag from a guard",
-			modifiers = { "delflag", "df" },
-			flags = "agmp",
-			min = 1)
+	@Command(aliases = "guard", usage = "delflag [name] [-p,m,g] (-a)", desc = "deletes a flag from a guard", modifiers = {
+			"delflag", "df" }, flags = "agmp", min = 1)
 	@CommandPermissions("guard.modify.flags")
 	public static void deleteFlag(CommandContext args, Player player,
 			HumanNPC npc) {
@@ -258,13 +227,7 @@ public class GuardCommands extends CommandHandler {
 				+ " removed.");
 	}
 
-	@Command(
-			aliases = "guard",
-			usage = "radius [radius]",
-			desc = "change the protection radius of a bouncer",
-			modifiers = "radius",
-			min = 2,
-			max = 2)
+	@Command(aliases = "guard", usage = "radius [radius]", desc = "change the protection radius of a bouncer", modifiers = "radius", min = 2, max = 2)
 	@CommandPermissions("guard.modify.radius")
 	public static void radius(CommandContext args, Player player, HumanNPC npc) {
 		Guard guard = npc.getType("guard");
@@ -274,13 +237,7 @@ public class GuardCommands extends CommandHandler {
 				+ StringUtils.wrap(args.getString(1)) + ".");
 	}
 
-	@Command(
-			aliases = "guard",
-			usage = "aggro",
-			desc = "set a guard to be aggressive",
-			modifiers = "aggro",
-			min = 1,
-			max = 1)
+	@Command(aliases = "guard", usage = "aggro", desc = "set a guard to be aggressive", modifiers = "aggro", min = 1, max = 1)
 	@CommandPermissions("guard.modify.aggro")
 	public static void aggro(CommandContext args, Player player, HumanNPC npc) {
 		Guard guard = npc.getType("guard");
