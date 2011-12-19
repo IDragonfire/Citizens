@@ -221,6 +221,7 @@
 			<pathelement location="${libs}/WorldGuard.jar"/>
 			<pathelement location="${libs}/EssentialsGroupManager.jar"/>
 			<pathelement location="${libs}/Vault.jar"/>
+			<pathelement location="${libs}/SpoutPluginAPI.jar"/>
 		</classpath>
 		</javac>
 		<antcall target="distdpromoter"/>
