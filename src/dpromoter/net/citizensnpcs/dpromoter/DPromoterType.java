@@ -1,12 +1,15 @@
 package net.citizensnpcs.dpromoter;
 
+import net.citizensnpcs.Citizens;
 import net.citizensnpcs.commands.CommandHandler;
 import net.citizensnpcs.dpromoter.event.DPromoterListener;
+import net.citizensnpcs.dpromoter.event.DPromoterSkinSetter;
 import net.citizensnpcs.npctypes.CitizensNPC;
 import net.citizensnpcs.npctypes.CitizensNPCType;
 import net.citizensnpcs.npctypes.NPCTypeManager;
 import net.citizensnpcs.properties.Properties;
 
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event.Type;
 
 public class DPromoterType extends CitizensNPCType {
@@ -37,6 +40,12 @@ public class DPromoterType extends CitizensNPCType {
 		super.registerEvents();
 		NPCTypeManager
 				.registerEvent(Type.CUSTOM_EVENT, new DPromoterListener());
+		startSkinSetter();
+	}
+
+	public static void startSkinSetter() {
+		Bukkit.getScheduler().scheduleAsyncDelayedTask(Citizens.plugin,
+				DPromoterSkinSetter.INSTANCE, 5l);
 	}
 
 }

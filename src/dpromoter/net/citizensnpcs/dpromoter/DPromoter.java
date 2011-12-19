@@ -92,7 +92,7 @@ public class DPromoter extends CitizensNPC {
 
 			case DPromoter.TRIAL_NEED:
 				DJobInfoValue jobInfo = npclookup.getJobInfoFromNpc(jobid);
-				System.out.println(jobInfo.toString());
+				// System.out.println(jobInfo.toString());
 				if (hasRequirements(player, jobInfo)) {
 					removeRequirements(player, jobInfo);
 					player.sendMessage(msglookup

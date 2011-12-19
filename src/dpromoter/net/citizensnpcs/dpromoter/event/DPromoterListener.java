@@ -16,6 +16,7 @@ public class DPromoterListener extends NPCListener {
 		if (event.getToggledType() == DPromoterType.TYPE) {
 			if (event.isToggledOn()) {
 				event.getNPC().setItemInHand(new ItemStack(Material.GOLD_AXE));
+				DPromoterType.startSkinSetter();
 			} else {
 				event.getNPC().setItemInHand(null);
 			}
