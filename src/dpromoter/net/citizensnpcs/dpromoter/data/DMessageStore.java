@@ -51,8 +51,8 @@ public class DMessageStore extends DHashStore {
 		for (int i = 0; i < normalReplacement.length; i++) {
 			buf = buf.replace(SEPERATOR + normalReplacement[i][0] + SEPERATOR,
 					normalReplacement[i][1]);
-			System.out.println(SEPERATOR + normalReplacement[i][0] + " - "
-					+ normalReplacement[i][1]);
+			// System.out.println(SEPERATOR + normalReplacement[i][0] + " - "
+			// + normalReplacement[i][1]);
 		}
 		return buf;
 	}

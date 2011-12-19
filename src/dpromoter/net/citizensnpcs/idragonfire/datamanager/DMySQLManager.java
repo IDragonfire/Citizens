@@ -44,10 +44,15 @@ public class DMySQLManager extends DDataManager {
 		}
 	}
 
+	// TODO: refactor
+	public Connection getCon() {
+		return this.con;
+	}
+
 	private ResultSet fastStatment(String sql) {
 		try {
 			PreparedStatement stmt = this.con.prepareStatement(sql);
-			System.out.println(stmt);
+			// System.out.println(stmt);
 			ResultSet rs = stmt.executeQuery();
 			rs.next();
 			return rs;
@@ -82,7 +87,7 @@ public class DMySQLManager extends DDataManager {
 			stmt.setInt(2, values[1]);
 			stmt.setString(3, player);
 			stmt.setInt(4, jobid);
-			System.out.println(stmt);
+			// System.out.println(stmt);
 			stmt.executeUpdate();
 		} catch (Exception e) {
 			checkDB(e);
@@ -96,7 +101,7 @@ public class DMySQLManager extends DDataManager {
 			stmt.setInt(2, jobid);
 			stmt.setInt(3, values[0]);
 			stmt.setInt(4, values[1]);
-			System.out.println(stmt);
+			// System.out.println(stmt);
 			stmt.executeUpdate();
 		} catch (Exception e) {
 			checkDB(e);
