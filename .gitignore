@@ -1,7 +1,6 @@
 \bin
 /bin
 .project
-.classpath
 /types
 \build
 /build

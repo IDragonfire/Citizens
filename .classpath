@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/quester"/>
+	<classpathentry kind="src" path="src/core"/>
+	<classpathentry kind="src" path="src/healer"/>
+	<classpathentry kind="src" path="src/guard"/>
+	<classpathentry kind="src" path="src/wizard"/>
+	<classpathentry kind="src" path="src/trader"/>
+	<classpathentry kind="src" path="src/alchemist"/>
+	<classpathentry kind="src" path="src/blacksmith"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="libs/BOSEconomy7.jar"/>
+	<classpathentry kind="lib" path="libs/bpermissions.jar"/>
+	<classpathentry kind="lib" path="libs/bukkit-0.0.1-SNAPSHOT.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://jd.bukkit.org/apidocs/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="libs/craftbukkit-0.0.1-SNAPSHOT.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://jd.bukkit.org/apidocs/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="libs/Essentials.jar"/>
+	<classpathentry kind="lib" path="libs/EssentialsGroupManager.jar"/>
+	<classpathentry kind="lib" path="libs/iCo4.jar"/>
+	<classpathentry kind="lib" path="libs/iCo5.jar"/>
+	<classpathentry kind="lib" path="libs/iCo6.jar"/>
+	<classpathentry kind="lib" path="libs/jooq-1.6.9.jar"/>
+	<classpathentry kind="lib" path="libs/MultiCurrency.jar"/>
+	<classpathentry kind="lib" path="libs/PermissionsBukkit-1.1.jar"/>
+	<classpathentry kind="lib" path="libs/PermissionsEx.jar"/>
+	<classpathentry kind="lib" path="libs/WorldGuard.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
